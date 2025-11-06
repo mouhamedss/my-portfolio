@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>محمد أمين — Portfolio</title>
+  <meta name="description" content="محمد أمين — Frontend developer (dark anime style)" />
+  <style>
+    :root{
+      --bg1:#07070b;
+      --bg2:#0b0f19;
+      --accent1:#8a5cff; /* purple */
+      --accent2:#2fe0ff; /* teal */
+      --muted:#9aa6b2;
+      --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: Inter, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Cairo", sans-serif;
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#eaf0ff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:hidden;
+    }
+
+    /* full-screen layout */
+    .stage{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:36px;
+      position:relative;
+    }
+
+    /* particle canvas under everything */
+    #bgCanvas{ position:absolute; inset:0; z-index:0; }
+
+    /* content card */
+    .card{
+      position:relative;
+      z-index:2;
+      width:min(980px,94%);
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:28px;
+      align-items:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04);
+      border-radius:18px;
+      padding:26px;
+      box-shadow: 0 20px 60px rgba(3,6,12,0.7);
+      overflow:hidden;
+      backdrop-filter: blur(6px);
+    }
+
+    /* left panel: avatar */
+    .left{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      align-items:center;
+      text-align:center;
+    }
+
+    .avatar-wrap{
+      width:260px;
+      height:260px;
+      border-radius:18px;
+      padding:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 12px 40px rgba(138,92,255,0.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition: transform .45s cubic-bezier(.2,.9,.3,1);
+    }
+    .avatar-wrap:hover{ transform: translateY(-8px) rotate(-1deg); }
+
+    /* SVG avatar (anime hacker style) */
+    .avatar-svg{ width:100%; height:100%; display:block }
+
+    .name{
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:0.6px;
+    }
+    .role{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .socials{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .btn{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.06);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      color: #eaf0ff;
+      cursor:pointer;
+      font-weight:700;
+      text-decoration:none;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .btn:hover{ transform: translateY(-4px); box-shadow:0 10px 30px rgba(138,92,255,0.12); }
+
+    .btn-primary{
+      background: linear-gradient(90deg,var(--accent1),var(--accent2));
+      color:#07121a;
+      border: none;
+      box-shadow: 0 12px 30px rgba(46,224,255,0.07);
+    }
+
+    /* right: intro and contact */
+    .right{ padding-right:6px; display:flex; flex-direction:column; gap:14px; }
+
+    .title{
+      font-size:26px;
+      font-weight:800;
+      line-height:1.05;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .subtitle{ color:var(--muted); font-size:14px; margin-top:6px; }
+
+    .desc{
+      margin-top:12px;
+      color:#cfe7ff;
+      font-size:15px;
+    }
+
+    .actions{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+
+    .lang-toggle{
+      position: absolute;
+      top:18px;
+      right:18px;
+      z-index:3;
+      background: rgba(255,255,255,0.03);
+      color:#eaf0ff;
+      border:1px solid rgba(255,255,255,0.06);
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+    }
+
+    /* QR block */
+    .qr {
+      margin-top:18px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .qr img{
+      width:120px;height:120px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 8px 30px rgba(138,92,255,0.12);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .qr img:hover{ transform: scale(1.06); box-shadow:0 18px 50px rgba(138,92,255,0.18); }
+    .qr .note{ color:var(--muted); font-size:13px; }
+
+    footer.small { margin-top:14px; color:var(--muted); font-size:13px; }
+
+    /* responsiveness */
+    @media (max-width:900px){
+      .card{ grid-template-columns: 1fr; padding:20px; gap:18px;}
+      .avatar-wrap{ width:200px; height:200px; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="bgCanvas"></canvas>
+
+    <button class="lang-toggle" id="langBtn">EN</button>
+
+    <div class="card" role="main" aria-labelledby="nameHeading">
+      <!-- left -->
+      <div class="left" aria-hidden>
+        <div class="avatar-wrap" title="Avatar — anime hacker">
+          <!-- stylized anime-ish SVG avatar (abstract, original) -->
+          <svg class="avatar-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1">
+                <stop offset="0" stop-color="#8a5cff"/>
+                <stop offset="1" stop-color="#2fe0ff"/>
+              </linearGradient>
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="8" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <rect x="0" y="0" width="300" height="300" rx="18" fill="url(#g1)" opacity="0.06"/>
+            <!-- circular neon frame -->
+            <circle cx="150" cy="110" r="78" fill="rgba(10,12,18,0.7)" stroke="url(#g1)" stroke-width="3" filter="url(#glow)"/>
+            <!-- hair (stylized) -->
+            <path d="M90 110 C85 70,130 40,150 60 C170 40,215 70,210 110 C205 145,165 150,150 150 C135 150,95 145,90 110Z"
+                  fill="#0b0f14" stroke="rgba(255,255,255,0.04)"/>
+            <!-- mask / visor -->
+            <rect x="102" y="120" width="96" height="28" rx="6" fill="#06111a" />
+            <path d="M106 130 h86" stroke="url(#g1)" stroke-width="2" stroke-linecap="round" />
+            <!-- face minimal -->
+            <circle cx="132" cy="145" r="4" fill="#0b0f14" opacity="0.7"/>
+            <circle cx="168" cy="145" r="4" fill="#0b0f14" opacity="0.7"/>
+            <!-- small accent lines -->
+            <g stroke="url(#g1)" stroke-width="1.2" stroke-linecap="round" opacity="0.9">
+              <path d="M118 120 q8 -6 16 0"/>
+              <path d="M180 120 q-8 -6 -16 0"/>
+            </g>
+            <!-- glowing underlay -->
+            <ellipse cx="150" cy="200" rx="70" ry="12" fill="rgba(138,92,255,0.06)" />
+          </svg>
+        </div>
+
+        <div class="name" id="nameHeading">محمد أمين</div>
+        <div class="role">مطوّر واجهات ومواقع — Algeria</div>
+
+        <div class="socials" aria-hidden>
+          <a class="btn" href="mailto:mouhamedaouameur@gmail.com" title="Email">📧 تواصل عبر الإيميل</a>
+          <a class="btn btn-primary" href="https://www.instagram.com/mouhamediam?igsh=OTB6MTJhczQ1Mzhz&utm_source=qr" target="_blank" title="Instagram">📷 إنستغرام</a>
+        </div>
+
+        <div class="qr" aria-hidden>
+          <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://www.instagram.com/mouhamediam?igsh=OTB6MTJhczQ1Mzhz&utm_source=qr" alt="QR to Instagram">
+          <div>
+            <div class="note">امسح الكود لفتح إنستغرامي</div>
+            <div class="small" style="margin-top:8px;color:var(--muted);font-size:13px">أو اضغط زر الإنستغرام لفتحه مباشرة</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- right -->
+      <div class="right">
+        <div>
+          <div class="title">
+            <span id="greeting">مرحبا —</span>
+            <div style="display:flex;flex-direction:column">
+              <div id="titleMain">أنا مطوّر واجهات ومواقع</div>
+              <div style="font-size:13px;color:var(--muted);margin-top:6px" id="sub">أصنع واجهات أنيقة وتجارب مستخدم سريعة</div>
+            </div>
+          </div>
+
+          <div class="desc" id="desc">
+            مرحبًا، أنا محمد أمين. أحبّ تحويل الأفكار إلى واجهات تفاعلية وسلسة. أستخدم HTML، CSS، وJavaScript لبناء صفحات متجاوبة وسريعة.
+          </div>
+
+          <div class="actions" id="actions">
+            <a class="btn btn-primary" href="mailto:mouhamedaouameur@gmail.com">✉️ أرسل رسالة</a>
+            <a class="btn" href="https://www.instagram.com/mouhamediam?igsh=OTB6MTJhczQ1Mzhz&utm_source=qr" target="_blank">🔗 افتح إنستغرام</a>
+          </div>
+
+          <div class="small footer small" style="margin-top:18px">© 2025 محمد أمين — جميع الحقوق محفوظة</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --------- particle background (lightweight) ----------
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = innerWidth;
+    let H = canvas.height = innerHeight;
+    const particles = [];
+    const num = Math.round((W*H)/90000); // density relative to screen
+
+    function rand(mn,mx){ return Math.random()*(mx-mn)+mn; }
+
+    function resize(){ W = canvas.width = innerWidth; H = canvas.height = innerHeight; particles.length = 0; init(); }
+    addEventListener('resize', resize);
+
+    function init(){
+      for(let i=0;i<num;i++){
+        particles.push({
+          x: rand(0,W),
+          y: rand(0,H),
+          vx: rand(-0.3,0.6),
+          vy: rand(-0.2,0.2),
+          r: rand(0.6,2.6),
+          hue: rand(240,300),
+          life: rand(60,240),
+          maxLife: rand(120,480)
+        });
+      }
+    }
+    init();
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      // soft gradient glow
+      const g = ctx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0, 'rgba(12,10,28,0.18)');
+      g.addColorStop(1, 'rgba(5,8,16,0.6)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+
+      for(let p of particles){
+        p.x += p.vx; p.y += p.vy;
+        p.life++;
+        if(p.x < -20) p.x = W+20;
+        if(p.x > W+20) p.x = -20;
+        if(p.y < -20) p.y = H+20;
+        if(p.y > H+20) p.y = -20;
+        const alpha = 0.08 + 0.6*(p.life/p.maxLife);
+        ctx.beginPath();
+        const grad = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*8);
+        grad.addColorStop(0, `rgba(138,92,255,${alpha})`);
+        grad.addColorStop(0.5, `rgba(47,224,255,${alpha*0.6})`);
+        grad.addColorStop(1, 'rgba(8,10,14,0)');
+        ctx.fillStyle = grad;
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+        if(p.life > p.maxLife){ p.life = 0; p.x = rand(0,W); p.y = rand(0,H); }
+      }
+      requestAnimationFrame(draw);
+    }
+    draw();
+
+    // ------------- language toggle (EN/AR) ---------------
+    const langBtn = document.getElementById('langBtn');
+    let lang = 'ar';
+    const text = {
+      ar: {
+        greeting: 'مرحبا —',
+        titleMain: 'أنا مطوّر واجهات ومواقع',
+        sub: 'أصنع واجهات أنيقة وتجارب مستخدم سريعة',
+        desc: 'مرحبًا، أنا محمد أمين. أحبّ تحويل الأفكار إلى واجهات تفاعلية وسلسة. أستخدم HTML، CSS، وJavaScript لبناء صفحات متجاوبة وسريعة.',
+        emailBtn: '✉️ أرسل رسالة',
+        instaBtn: '🔗 افتح إنستغرام',
+        qrNote: 'امسح الكود لزيارة إنستغرامي'
+      },
+      en: {
+        greeting: 'Hi —',
+        titleMain: "I'm a Front-End & Web Developer",
+        sub: 'I build elegant interfaces and fast user experiences',
+        desc: "Hi, I'm Mohammed Amin. I turn ideas into interactive, smooth interfaces. I use HTML, CSS and JavaScript to build responsive fast pages.",
+        emailBtn: '✉️ Send email',
+        instaBtn: '🔗 Open Instagram',
+        qrNote: 'Scan QR to open my Instagram'
+      }
+    };
+
+    function applyLang(){
+      const t = text[lang];
+      document.getElementById('greeting').textContent = t.greeting;
+      document.getElementById('titleMain').textContent = t.titleMain;
+      document.getElementById('sub').textContent = t.sub;
+      document.getElementById('desc').textContent = t.desc;
+      document.querySelectorAll('.btn')[0].textContent = t.emailBtn;
+      document.querySelectorAll('.btn')[1].textContent = t.instaBtn;
+      document.querySelector('.qr .note').textContent = t.qrNote;
+      langBtn.textContent = lang === 'ar' ? 'EN' : 'AR';
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
+    }
+    langBtn.addEventListener('click', ()=>{ lang = (lang==='ar') ? 'en' : 'ar'; applyLang(); });
+    applyLang();
+
+    // small entrance animation for card elements
+    window.addEventListener('load', ()=> {
+      document.querySelectorAll('.card .fade').forEach((el,i)=> {
+        setTimeout(()=> el.classList.add('show'), i*120);
+      });
+    });
+
+    // Accessibility: allow keyboard toggle (T)
+    document.addEventListener('keydown', e => {
+      if(e.key.toLowerCase() === 't') { langBtn.click(); }
+    });
+
+  </script>
+</body>
+</html>
